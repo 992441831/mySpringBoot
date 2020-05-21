@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>文件上传</title>
+    <script src="jquery-1.7.2.min.js"></script>
+    <script>
+        $("#fileupload").change(function() {
+            var $file = $(this);
+            var objUrl = $file[0].files[0];
+            //获得一个http格式的url路径:mozilla(firefox)||webkit or chrome
+            var windowURL = window.URL || window.webkitURL;
+            //createObjectURL创建一个指向该参数对象(图片)的URL
+            var dataURL;
+            dataURL = windowURL.createObjectURL(objUrl);
+            //把url给图片的src，让其显示
+            $("#imageview").attr("src",dataURL);
+            $('#imageview').attr("style","display:inline");
+        });
+    </script>
+</head>
+<body>
+<h3>文件上传：</h3>
+<form action="/FileSystemController/createfile.do" method="post" enctype="multipart/form-data">
+    <label for="fileupload" class="updata_file">点击这里上传图片</label>
+    <input type="file" id="fileupload" style="display: none" name="upload">
+    <img src="" id="imageview" style="display: none">
+    <button type="submit">上传</button>
+</form>
+
+
+</body>
+</html>
