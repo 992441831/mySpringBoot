@@ -1,7 +1,6 @@
 spring:
-  data:
-    elasticsearch:
-      cluster-name: my-cluster
-      cluster-nodes: 192.168.92.158:9300
-      repositories:
-        enabled: true
+  profiles:
+    active: esTest
+
+config:
+  test: val

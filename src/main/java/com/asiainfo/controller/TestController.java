@@ -1,11 +1,15 @@
 package com.asiainfo.controller;
 
+import com.asiainfo.component.TestComponent;
 import com.asiainfo.util.PicUtil;
+import com.asiainfo.util.TestUtil;
+import com.asiainfo.util.TestUtil2;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeAction;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeRequestBuilder;
 import org.elasticsearch.action.admin.indices.analyze.AnalyzeResponse;
 import org.elasticsearch.client.IndicesAdminClient;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.ModelMap;
@@ -20,9 +24,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.*;
 
 /**
  * Created by zhangqq20190306 on 2020/3/12.
@@ -31,8 +37,63 @@ import java.util.Map;
 @RequestMapping("/TestController")
 public class TestController {
 
-    @Autowired
+    //@Autowired
     private ElasticsearchTemplate elasticsearchTemplate;
+
+    static ExecutorService executorService= Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()*2);
+
+    @Autowired
+    private Environment environment;
+
+    @Autowired
+    private TestComponent testComponent;
+
+    @Autowired
+    private TestUtil testUtil;
+
+    @RequestMapping(value = "/testController2.do", method = RequestMethod.GET)
+    @ResponseBody
+    public Object testController2(HttpServletRequest request, HttpServletResponse response) {
+        System.out.println("环境："+ Arrays.toString(environment.getActiveProfiles()));
+        testComponent.test();
+        testUtil.test();
+        new TestUtil2().test();
+        return "成功";
+    }
+
+    @RequestMapping(value = "/testController.do", method = RequestMethod.GET)
+    @ResponseBody
+    public Object testController(HttpServletRequest request, HttpServletResponse response) {
+
+        Future<String> future = executorService.submit(new Callable<String>() {
+            @Override
+            public String call() {
+                try {
+                    //线程休息5s
+                    TimeUnit.SECONDS.sleep(10);
+                    System.out.println("我执行完成");
+                } catch (InterruptedException e) {
+                    //future.cancel 会抛出这个
+                    System.out.println("任务被中断。");
+                }
+                return  "OK";
+            }
+        });
+        try {
+            String result = future.get(1, TimeUnit.SECONDS);
+            System.out.println("result:"+result);
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            //future.cancel(true);
+            System.out.println("任务超时。");
+        }finally {
+            System.out.println("清理资源。");
+            future.cancel(false);
+            //Thread.interrupted();
+        }
+
+
+        return "成功";
+    }
 
 
     public  List<AnalyzeResponse.AnalyzeToken> addrAnalyze(String addr_analyze) {
